@@ -145,11 +145,14 @@ struct FileDragTrackingState {
 
 @MainActor
 final class NotchPanelController: NSObject {
-    private let store = NoteStore()
+    /// 应用级依赖容器。笔记与翻译共用同一份 store，避免状态分裂。
+    let services = AppServices()
+    private var store: NoteStore { services.noteStore }
+    private var workspaceState: NotebookWorkspaceState { services.workspaceState }
+
     private let settingsStore = AppSettingsStore()
     private let imageStore = LocalImageStore()
     private let fileShelfStore = FileShelfStore()
-    private let workspaceState = NotebookWorkspaceState()
     private let drawerState = DrawerState()
     private let editorInteractionState = EditorInteractionState()
     private let hotPanel: NotchPanel
@@ -300,7 +303,12 @@ final class NotchPanelController: NSObject {
             workspaceState: workspaceState,
             drawerState: drawerState,
             editorInteractionState: editorInteractionState,
-            layout: layout
+            layout: layout,
+            translationSettings: services.translationSettings,
+            translationSession: services.translationSession,
+            onOpenTranslationSettings: { [weak self] in
+                self?.services.showTranslationSettings()
+            }
         )
 
         if let hotHostingView {

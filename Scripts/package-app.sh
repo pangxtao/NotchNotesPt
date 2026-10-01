@@ -25,9 +25,15 @@ swift build \
   --arch x86_64 \
   --scratch-path "$BUILD_DIR"
 
-BINARY_PATH="$BUILD_DIR/apple/Products/Release/$APP_NAME"
+# Swift 6 / Xcode 27 的产物目录结构为 out/Products/Release；旧版为 apple/Products/Release。
+# 先做新路径 fallback，再兼容旧路径。
+BINARY_PATH="$BUILD_DIR/out/Products/Release/$APP_NAME"
+if [[ ! -x "$BINARY_PATH" ]]; then
+  BINARY_PATH="$BUILD_DIR/apple/Products/Release/$APP_NAME"
+fi
 if [[ ! -x "$BINARY_PATH" ]]; then
   echo "找不到构建产物：$BINARY_PATH" >&2
+  echo "请检查 swift build 是否成功，或产物目录结构是否变更。" >&2
   exit 1
 fi
 

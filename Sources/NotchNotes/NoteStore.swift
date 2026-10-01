@@ -93,7 +93,12 @@ final class NoteStore: ObservableObject {
     }
 
     func addTab() {
-        let tab = NoteTab()
+        addTab(text: "")
+    }
+
+    /// 用一段现成的文本新建笔记（翻译结果「存为笔记」走这条路径）。
+    func addTab(text: String) {
+        let tab = NoteTab(text: text)
         tabs.append(tab)
         activeTabID = tab.id
         scheduleSave()

@@ -91,7 +91,9 @@ enum NotchGeometry {
         let compactHeight = measured == .zero
             ? min(max(fallbackNotch.height, 32), 38)
             : min(notch.height, 38)
-        let expandedWidth = min(max(notch.width + 220, 480), 540, screenFrame.width - 36)
+        // 展开宽度只按屏幕计算，**与工作区模式无关**：笔记页与翻译页共用同一档宽度
+        // （翻译页是左右分栏，需要更宽），这样在 Notes / Translate 之间切换时面板尺寸完全不动。
+        let expandedWidth = min(max(notch.width + 520, 700), 760, screenFrame.width - 36)
         let expandedHeight = min(max(notch.height + 374, 408), screenFrame.height - 84)
 
         return NotchLayout(

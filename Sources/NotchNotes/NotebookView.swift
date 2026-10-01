@@ -17,6 +17,9 @@ struct NotebookView: View {
     @ObservedObject var drawerState: DrawerState
     @ObservedObject var editorInteractionState: EditorInteractionState
     let layout: NotchLayout
+    @ObservedObject var translationSettings: TranslationSettingsStore
+    @ObservedObject var translationSession: TranslationSessionStore
+    var onOpenTranslationSettings: (() -> Void)?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -60,46 +63,19 @@ struct NotebookView: View {
     }
 
     private var expandedContent: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: editorSpacing) {
-                TabPagerControl(
-                    store: store,
-                    editorInteractionState: editorInteractionState,
-                    availableWidth: tabControlWidth
-                )
-                .frame(
-                    width: tabControlWidth,
-                    height: tabControlHeight,
-                    alignment: .topLeading
-                )
-                .frame(height: toolbarHeight, alignment: .top)
+        VStack(spacing: editorSpacing) {
+            topBar
 
-                VStack(spacing: shelfSpacing) {
-                    MarkdownEditorPanel(
-                        store: store,
-                        settingsStore: settingsStore,
-                        imageStore: imageStore,
-                        editorInteractionState: editorInteractionState,
-                        size: noteEditorSize
-                    )
-                    .frame(width: noteEditorSize.width, height: noteEditorSize.height)
-                    .background(Color(red: 0.06, green: 0.06, blue: 0.07))
-
-                    if isFileShelfVisible {
-                        FileShelfView(
-                            store: fileShelfStore,
-                            workspaceState: workspaceState,
-                            size: fileShelfSize
-                        )
-                        .frame(width: fileShelfSize.width, height: fileShelfSize.height)
-                        .transition(
-                            .move(edge: .bottom)
-                                .combined(with: .opacity)
-                                .combined(with: .scale(scale: 0.97, anchor: .bottom))
-                        )
-                    }
-                }
-                .animation(shelfAnimation, value: isFileShelfVisible)
+            if workspaceState.mode == .translate {
+                TranslationView(
+                    session: translationSession,
+                    settings: translationSettings,
+                    onOpenSettings: onOpenTranslationSettings
+                )
+                .frame(width: translationSize.width, height: translationSize.height)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            } else {
+                notesWorkspace
             }
         }
         .padding(.top, toolbarTopPadding)
@@ -122,6 +98,65 @@ struct NotebookView: View {
             workspaceState.isShelfDropTargeted = false
             workspaceState.isDraggingShelfItem = false
         }
+    }
+
+    /// 顶栏：左侧是笔记标签页（仅笔记模式），右侧是 Notes / Translate 切换。
+    /// 两个工作区共用同一档面板宽度，切换时窗口不伸缩。
+    private var topBar: some View {
+        HStack(spacing: 10) {
+            if workspaceState.mode == .notes {
+                TabPagerControl(
+                    store: store,
+                    editorInteractionState: editorInteractionState,
+                    availableWidth: tabControlWidth
+                )
+                .frame(
+                    width: tabControlWidth,
+                    height: tabControlHeight,
+                    alignment: .topLeading
+                )
+            } else {
+                Text("Translation")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.leading, 2)
+            }
+
+            Spacer(minLength: 0)
+
+            WorkspaceModeSwitcher(mode: $workspaceState.mode)
+        }
+        .frame(height: toolbarHeight, alignment: .top)
+    }
+
+    /// 笔记工作区：Markdown 编辑器 + 底部文件暂存架。
+    private var notesWorkspace: some View {
+        VStack(spacing: shelfSpacing) {
+            MarkdownEditorPanel(
+                store: store,
+                settingsStore: settingsStore,
+                imageStore: imageStore,
+                editorInteractionState: editorInteractionState,
+                size: noteEditorSize
+            )
+            .frame(width: noteEditorSize.width, height: noteEditorSize.height)
+            .background(Color(red: 0.06, green: 0.06, blue: 0.07))
+
+            if isFileShelfVisible {
+                FileShelfView(
+                    store: fileShelfStore,
+                    workspaceState: workspaceState,
+                    size: fileShelfSize
+                )
+                .frame(width: fileShelfSize.width, height: fileShelfSize.height)
+                .transition(
+                    .move(edge: .bottom)
+                        .combined(with: .opacity)
+                        .combined(with: .scale(scale: 0.97, anchor: .bottom))
+                )
+            }
+        }
+        .animation(shelfAnimation, value: isFileShelfVisible)
     }
 
     private var revealWidth: CGFloat {
@@ -175,8 +210,29 @@ struct NotebookView: View {
         12
     }
 
+    /// 模式切换器占位宽度，用于给笔记标签页让出空间。
+    private var modeSwitcherWidth: CGFloat { 148 }
+
     private var tabControlWidth: CGFloat {
-        max(layout.expandedSize.width - contentHorizontalPadding * 2, 220)
+        max(
+            layout.expandedSize.width - contentHorizontalPadding * 2 - modeSwitcherWidth - 10,
+            180
+        )
+    }
+
+    /// 翻译页与笔记编辑区同宽，高度不扣掉文件暂存架。
+    private var translationSize: CGSize {
+        CGSize(
+            width: layout.expandedSize.width - contentHorizontalPadding * 2,
+            height: max(
+                layout.expandedSize.height
+                    - toolbarTopPadding
+                    - contentBottomPadding
+                    - toolbarHeight
+                    - editorSpacing,
+                200
+            )
+        )
     }
 
     private var tabControlHeight: CGFloat {
@@ -1037,5 +1093,42 @@ private struct PointingHandCursorModifier: ViewModifier {
                     isCursorActive = false
                 }
             }
+    }
+}
+
+/// 顶栏右侧的 `Notes | Translate` 切换器。
+///
+/// 刻意不复用笔记标签页的圆点样式：那是「同一工作区内的多篇笔记」语义，
+/// 与「切换工作区」不是一回事，混在一起会让两层 tab 语义打架。
+private struct WorkspaceModeSwitcher: View {
+    @Binding var mode: WorkspaceMode
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(WorkspaceMode.allCases) { item in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.16)) {
+                        mode = item
+                    }
+                } label: {
+                    Text(item.title)
+                        .font(.system(size: 11, weight: mode == item ? .semibold : .regular))
+                        .foregroundStyle(.white.opacity(mode == item ? 0.92 : 0.4))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .fill(.white.opacity(mode == item ? 0.12 : 0))
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(.white.opacity(0.05))
+        )
     }
 }

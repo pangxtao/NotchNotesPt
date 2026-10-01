@@ -6,6 +6,8 @@ final class NotebookWorkspaceState: ObservableObject {
     @Published var isShelfDropTargeted = false
     @Published var isDraggingShelfItem = false
     @Published var isPreviewingShelfItem = false
+    /// 当前展开的是笔记页还是翻译页。宽度与模式无关，切换只替换内容区。
+    @Published var mode: WorkspaceMode = .notes
 }
 
 struct FileShelfItem: Identifiable, Codable, Equatable {

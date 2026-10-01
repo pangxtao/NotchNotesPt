@@ -7,3 +7,6 @@ dist.noindex/
 .runtime/
 .swiftpm/
 *.xcuserdatad
+
+# Local WorkBuddy memory (machine-specific)
+.workbuddy/

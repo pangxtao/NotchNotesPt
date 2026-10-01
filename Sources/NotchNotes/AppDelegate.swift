@@ -9,6 +9,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         panelController = NotchPanelController()
         panelController?.showDocked()
+        // 注册全局划词热键并开始监听设置变化。
+        panelController?.services.startSelectionTranslation()
         buildStatusItem()
         buildMenu()
     }
@@ -61,6 +63,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         appMenu.addItem(.separator())
 
+        let translateItem = NSMenuItem(
+            title: "Translate Selected Text",
+            action: #selector(translateSelection),
+            keyEquivalent: ""
+        )
+        translateItem.target = self
+        appMenu.addItem(translateItem)
+
+        let translationSettingsItem = NSMenuItem(
+            title: "Translation Settings…",
+            action: #selector(openTranslationSettings),
+            keyEquivalent: ","
+        )
+        translationSettingsItem.target = self
+        appMenu.addItem(translationSettingsItem)
+
+        appMenu.addItem(.separator())
+
         let quitItem = NSMenuItem(title: "Quit NotchNotes", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
         appMenu.addItem(quitItem)
@@ -74,6 +94,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let newItem = NSMenuItem(title: "New Note", action: #selector(newNote), keyEquivalent: "n")
         newItem.target = self
         menu.addItem(newItem)
+
+        menu.addItem(.separator())
+
+        let translateItem = NSMenuItem(
+            title: "Translate Selected Text",
+            action: #selector(translateSelection),
+            keyEquivalent: ""
+        )
+        translateItem.target = self
+        menu.addItem(translateItem)
+
+        let translationSettingsItem = NSMenuItem(
+            title: "Translation Settings…",
+            action: #selector(openTranslationSettings),
+            keyEquivalent: ""
+        )
+        translationSettingsItem.target = self
+        menu.addItem(translationSettingsItem)
 
         menu.addItem(.separator())
 
@@ -188,6 +226,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func hideNotes() {
         panelController?.collapse(animated: true)
+    }
+
+    /// 等价于在任意应用里选中文字后按下划词快捷键。
+    @objc private func translateSelection() {
+        panelController?.services.translateSelectionNow()
+    }
+
+    @objc private func openTranslationSettings() {
+        panelController?.services.showTranslationSettings()
     }
 
     @objc private func quit() {

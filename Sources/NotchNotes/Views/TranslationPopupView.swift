@@ -208,11 +208,11 @@ struct TranslationPopupView: View {
                 .foregroundStyle(.white.opacity(0.72))
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Button {
-                    AccessibilityPermission.openSystemSettings()
+                    AccessibilityPermission.request()
                 } label: {
-                    Text("Open System Settings")
+                    Text("Re-trigger Prompt")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.white.opacity(0.9))
                         .padding(.horizontal, 10)
@@ -224,6 +224,15 @@ struct TranslationPopupView: View {
                 }
                 .buttonStyle(.plain)
 
+                Button {
+                    AccessibilityPermission.openSystemSettings()
+                } label: {
+                    Text("Open System Settings")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .buttonStyle(.plain)
+
                 Button("Try again") {
                     controller.retryAfterPermissionGrant()
                 }
@@ -232,10 +241,16 @@ struct TranslationPopupView: View {
                 .foregroundStyle(.white.opacity(0.6))
             }
 
-            Text("After granting access, run NotchNotes again if the shortcut still does not work.")
+            Text("If NotchNotes is already enabled in System Settings, the binary fingerprint may have changed. Remove it from the list and add it again.")
                 .font(.system(size: 10))
                 .foregroundStyle(.white.opacity(0.34))
                 .fixedSize(horizontal: false, vertical: true)
+
+            Text(AccessibilityPermission.currentBundlePath)
+                .font(.system(size: 9))
+                .foregroundStyle(.white.opacity(0.22))
+                .lineLimit(2)
+                .truncationMode(.middle)
         }
         .padding(.horizontal, TranslationPopupMetrics.horizontalPadding)
         .padding(.top, 4)

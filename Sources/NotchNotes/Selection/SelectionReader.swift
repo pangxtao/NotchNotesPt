@@ -24,6 +24,16 @@ enum AccessibilityPermission {
         ) else { return }
         NSWorkspace.shared.open(url)
     }
+
+    /// 当前运行进程对应的 bundle 路径（用于权限诊断）。
+    static var currentBundlePath: String {
+        Bundle.main.bundlePath
+    }
+
+    /// 当前运行进程是否为 .app bundle（命令行 `swift run` 跑的则不是）。
+    static var isRunningAsAppBundle: Bool {
+        currentBundlePath.hasSuffix(".app")
+    }
 }
 
 // MARK: - 文本归一化

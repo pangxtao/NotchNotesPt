@@ -33,10 +33,10 @@ swift run NotchNotes
 
 ```bash
 ./Scripts/package-app.sh
-open dist.noindex/NotchNotes.app
+open dist.noindex/NotchNotesPt.app
 ```
 
-脚本会生成 Apple Silicon + Intel 通用应用、ZIP 附件和 SHA-256 校验文件。正式签名和公证时可设置：
+脚本会生成 Apple Silicon + Intel 通用应用、ZIP 附件和 SHA-256 校验文件。产物名默认 `NotchNotesPt.app`，可用 `BUNDLE_NAME=YourName ./Scripts/package-app.sh` 覆盖（Bundle Identifier 保持不变，以免辅助功能授权失效）。正式签名和公证时可设置：
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \

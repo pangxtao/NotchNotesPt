@@ -123,13 +123,7 @@ struct TranslationView: View {
             Divider().overlay(.white.opacity(0.05))
 
             ZStack(alignment: .topLeading) {
-                TextEditor(text: $session.inputText)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.92))
-                    .scrollContentBackground(.hidden)
-                    .scrollIndicators(.hidden)
-                    .background(Color.clear)
-                    .background(HidesScrollIndicators())
+                PlainTextEditor(text: $session.inputText, fontSize: 13)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)
 
@@ -265,6 +259,7 @@ struct TranslationView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
             }
+            .scrollIndicators(.hidden)
         } else if session.hasTranslation {
             ScrollView {
                 Text(session.translatedText)
@@ -276,6 +271,7 @@ struct TranslationView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
             }
+            .scrollIndicators(.hidden)
         } else {
             Text("Translation appears here.")
                 .font(.system(size: 12))
